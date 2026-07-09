@@ -17,7 +17,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 #define SENSOR_NAME "gc4653"
 #define SENSOR_RESET_GPIO GPIO_PC(27)
@@ -50,18 +49,6 @@ static int shvflip = 1;
 struct regval_list {
 	uint16_t reg_num;
 	unsigned char value;
-};
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-	.rst_gpio = SENSOR_RESET_GPIO,
 };
 
 struct again_lut {
@@ -1424,14 +1411,12 @@ static struct i2c_driver sensor_driver = {
 
 static __init int init_sensor(void)
 {
-	sensor_common_init(&sensor_info);
 	return private_i2c_add_driver(&sensor_driver);
 }
 
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

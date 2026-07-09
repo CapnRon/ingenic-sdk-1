@@ -6,8 +6,7 @@ ifneq ($(SENSOR_MODEL),)
 	MODULE_NAME := sensor_$(SENSOR_MODEL)_$(SOC_FAMILY)
 	OUT := $(MODULE_NAME)
 	SRCS := \
-		$(DIR)/$(SENSOR_MODEL).c \
-		$(KERNEL_VERSION)/sensor-src/common/sensor-info.c
+		$(DIR)/$(SENSOR_MODEL).c
 	OBJS := $(SRCS:%.c=%.o) \
 		$(ASM_SRCS:%.S=%.o)
 	$(OUT)-objs := $(OBJS)
@@ -20,8 +19,7 @@ ifneq ($(SENSOR_1_MODEL),)
 	MODULE_1_NAME := sensor_$(SENSOR_1_MODEL)_$(SOC_FAMILY)
 	OUT_1 := $(MODULE_1_NAME)
 	SRCS_1 := \
-		$(DIR)/$(SENSOR_1_MODEL).c \
-		$(KERNEL_VERSION)/sensor-src/common/sensor-info.c
+		$(DIR)/$(SENSOR_1_MODEL).c
 	OBJS_1 := $(SRCS_1:%.c=%.o) \
 			$(ASM_SRCS:%.S=%.o)
 	$(OUT_1)-objs := $(OBJS_1)
@@ -33,8 +31,7 @@ ifneq ($(SENSOR_2_MODEL),)
 	MODULE_2_NAME := sensor_$(SENSOR_2_MODEL)_$(SOC_FAMILY)
 	OUT_2 := $(MODULE_2_NAME)
 	SRCS_2 := \
-		$(DIR)/$(SENSOR_2_MODEL).c \
-		$(KERNEL_VERSION)/sensor-src/common/sensor-info.c
+		$(DIR)/$(SENSOR_2_MODEL).c
 	OBJS_2 := $(SRCS_2:%.c=%.o) \
 			$(ASM_SRCS:%.S=%.o)
 	$(OUT_2)-objs := $(OBJS_2)

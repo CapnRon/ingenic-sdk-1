@@ -15,7 +15,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 /* 1080p@30fps: insmod sensor_sensor_t31.ko sensor_resolution=200 sensor_max_fps=30 */
 /* 1080p@60fps: insmod sensor_sensor_t31.ko sensor_resolution=200 sensor_max_fps=60 */
@@ -72,17 +71,6 @@ MODULE_PARM_DESC(data_type, "Sensor Date Type");
 static int wdr_bufsize = 960000;//cache lines corrponding on VPB1
 module_param(wdr_bufsize, int, S_IRUGO);
 MODULE_PARM_DESC(wdr_bufsize, "Wdr Buf Size");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
 	unsigned char reg_num;
@@ -1521,7 +1509,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -1534,7 +1521,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

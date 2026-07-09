@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -87,18 +86,6 @@ module_param(shvflip, int, S_IRUGO);
 MODULE_PARM_DESC(shvflip, "Sensor HV Flip Enable interface");
 
 static unsigned int expo_val = 0x031f0320;
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.actual_fps = 0,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -1219,7 +1206,6 @@ static int sensor_set_wdr_stop(struct tx_isp_subdev *sd, int wdr_en)
 
 	if (wdr_en == 1) {
 		wsize = &sensor_win_sizes[1];
-		sensor_info.max_fps = 15;
 		data_type = TX_SENSOR_DATA_TYPE_WDR_DOL;
 		memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_wdr),sizeof(sensor_mipi_wdr));
 		sensor_attr.data_type = data_type;
@@ -1237,7 +1223,6 @@ static int sensor_set_wdr_stop(struct tx_isp_subdev *sd, int wdr_en)
 		printk("------------> switch wdr ok <-------------\n");
 	} else if (wdr_en == 0) {
 		wsize = &sensor_win_sizes[0];
-		sensor_info.max_fps = 15;
 		data_type = TX_SENSOR_DATA_TYPE_LINEAR;
 		memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_linear),sizeof(sensor_mipi_linear));
 		sensor_attr.data_type = data_type;
@@ -1263,7 +1248,6 @@ static int sensor_set_wdr_stop(struct tx_isp_subdev *sd, int wdr_en)
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	sensor->video.attr = &sensor_attr;
 
 	return ret;
@@ -1290,7 +1274,6 @@ static int sensor_init(struct tx_isp_subdev *sd, int enable)
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	ret = sensor_write_array(sd, wsize->regs);
 	if (ret)
 		return ret;
@@ -1367,7 +1350,6 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps)
 	}
 	sensor->video.fps = fps;
 
-	sensor_update_actual_fps((fps >> 16) & 0xffff);
 	sensor->video.attr->max_integration_time_native = vts - 4;
 	sensor->video.attr->integration_time_limit = vts - 4;
 	sensor->video.attr->total_height = vts;
@@ -1414,7 +1396,6 @@ static int sensor_set_mode(struct tx_isp_subdev *sd, int value)
 		sensor->video.mbus.colorspace = wsize->colorspace;
 		sensor->video.fps = wsize->fps;
 
-		sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 		ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
 	}
 
@@ -1635,7 +1616,6 @@ static int sensor_probe(struct i2c_client *client,
 	if (data_type == TX_SENSOR_DATA_TYPE_LINEAR) {
 		if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_resolution == SENSOR_RES_500)) {
 			wsize = &sensor_win_sizes[0];
-			sensor_info.max_fps = 15;
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_linear),sizeof(sensor_mipi_linear));
 			sensor_attr.max_integration_time_native = 2662;
 			sensor_attr.integration_time_limit = 2662;
@@ -1646,7 +1626,6 @@ static int sensor_probe(struct i2c_client *client,
 			printk("------------> linear is ok <-------------\n");
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_resolution == SENSOR_RES_400)) {
 			wsize = &sensor_win_sizes[2];
-			sensor_info.max_fps = 13;
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_linear),sizeof(sensor_mipi_linear));
 			sensor_attr.max_integration_time_native = 1650;
 			sensor_attr.integration_time_limit = 1650;
@@ -1661,7 +1640,6 @@ static int sensor_probe(struct i2c_client *client,
 	} else if (data_type == TX_SENSOR_DATA_TYPE_WDR_DOL) {
 		sensor_attr.wdr_cache = wdr_bufsize;
 		wsize = &sensor_win_sizes[1];
-		sensor_info.max_fps = 15;
 		memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_wdr),sizeof(sensor_mipi_wdr));
 		sensor_attr.one_line_expr_in_us = 25;
 		sensor_attr.max_again = 260651;
@@ -1697,7 +1675,6 @@ static int sensor_probe(struct i2c_client *client,
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	tx_isp_subdev_init(&sensor_platform_device, sd, &sensor_ops);
 	tx_isp_set_subdevdata(sd, client);
 	tx_isp_set_subdev_hostdata(sd, sensor);
@@ -1752,7 +1729,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -1766,7 +1742,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

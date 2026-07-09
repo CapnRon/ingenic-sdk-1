@@ -21,7 +21,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 #define MCLK 27000000
 #define SENSOR_NAME "gc4663"
@@ -57,23 +56,6 @@
 #endif
 
 static int wdr_bufsize = 2 * 3000 * 188;
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = (SENSOR_CHIP_ID_H << 8) | SENSOR_CHIP_ID_L,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = 25,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = 2560,
-	.height = 1440,
-	.rst_gpio = -1,
-	.pwdn_gpio = -1,
-	.boot = 0,
-	.mclk = 1,
-	.video_interface = 0,
-	.i2c_adapter = 0,
-};
 
 struct regval_list {
 	uint16_t reg_num;
@@ -1190,9 +1172,6 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 		ISP_WARNING("Description Failed to synchronize the attributes of sensor!!!");
 	}
 
-	sensor_common_update(&sensor_info, info->rst_gpio, info->pwdn_gpio,
-			     (int)info->default_boot, (int)info->mclk,
-			     (int)info->video_interface, client->adapter->nr);
 	return 0;
 
 err_get_mclk:
@@ -1531,11 +1510,9 @@ int get_sensor_wdr_mode(void) {
 }
 
 int init_sensor(void) {
-	sensor_common_init(&sensor_info);
 	return private_i2c_add_driver(&sensor_driver);
 }
 
 void exit_sensor(void) {
-	sensor_common_exit();
 	i2c_del_driver(&sensor_driver);
 }

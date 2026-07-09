@@ -19,7 +19,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -91,18 +90,6 @@ MODULE_PARM_DESC(wdr_bufsize, "Wdr Buf Size");
 static int shvflip = 0;
 module_param(shvflip, int, S_IRUGO);
 MODULE_PARM_DESC(shvflip, "Sensor HV Flip Enable interface");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.actual_fps = 0,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -1232,7 +1219,6 @@ static int sensor_init(struct tx_isp_subdev *sd, int enable) {
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	ret = sensor_write_array(sd, wsize->regs);
 #ifdef FAST_AE
 	ret += setting_fast_ae(sd,NULL);
@@ -1298,7 +1284,6 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps) {
 	vb = vts - 20 - 1088;
 	sensor->video.fps = fps;
 
-	sensor_update_actual_fps((fps >> 16) & 0xffff);
 	sensor->video.attr->max_integration_time_native = vts - 4;
 	sensor->video.attr->integration_time_limit = vts - 4;
 	sensor->video.attr->total_height = vts;
@@ -1386,7 +1371,6 @@ static int sensor_set_wdr_stop(struct tx_isp_subdev *sd, int wdr_en) {
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	sensor->video.attr = &sensor_attr;
 
 	ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
@@ -1406,7 +1390,6 @@ static int sensor_set_mode(struct tx_isp_subdev *sd, int value) {
 		sensor->video.mbus.colorspace = wsize->colorspace;
 		sensor->video.fps = wsize->fps;
 
-		sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 		ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
 	}
 	return ret;
@@ -1633,7 +1616,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 #ifdef __WDR__
 	if (data_type == TX_SENSOR_DATA_TYPE_WDR_DOL) {
 		wsize = &sensor_win_sizes[1];
-		sensor_info.max_fps = 15;
 		memcpy(&sensor_attr.mipi, &sensor_mipi_wdr, sizeof(sensor_mipi_wdr));
 		sensor_attr.data_type = data_type;
 		sensor_attr.wdr_cache = wdr_bufsize;
@@ -1647,7 +1629,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	} else {
 #ifdef FAST_AE
 		wsize = &sensor_win_sizes[2];
-		sensor_info.max_fps = 25;
 		memcpy(&sensor_attr.mipi, &sensor_mipi_linear, sizeof(sensor_mipi_linear));
 		sensor_attr.one_line_expr_in_us = 30;
 		sensor_attr.max_integration_time_native = 1350 - 4;
@@ -1658,7 +1639,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 		pr_debug("probe in fast ae------->%s\n", SENSOR_NAME);
 #else
 		wsize = &sensor_win_sizes[0];
-		sensor_info.max_fps = 25;
 		memcpy(&sensor_attr.mipi, &sensor_mipi_linear, sizeof(sensor_mipi_linear));
 		sensor_attr.one_line_expr_in_us = 30;
 		sensor_attr.max_integration_time_native = 1350 - 4;
@@ -1687,7 +1667,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	tx_isp_subdev_init(&sensor_platform_device, sd, &sensor_ops);
 	tx_isp_set_subdevdata(sd, client);
 	tx_isp_set_subdev_hostdata(sd, sensor);
@@ -1737,7 +1716,6 @@ static struct i2c_driver sensor_driver = {
 
 static __init int init_sensor(void) {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -1749,7 +1727,6 @@ static __init int init_sensor(void) {
 
 static __exit void exit_sensor(void) {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

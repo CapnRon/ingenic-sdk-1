@@ -15,7 +15,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 #define SENSOR_NAME "os04l10"
 #define SENSOR_MAX_WIDTH 2560
@@ -72,17 +71,6 @@ MODULE_PARM_DESC(data_type, "Sensor Date Type");
 static int wdr_bufsize = 10077696; // cache lines corrponding on VPB1
 module_param(wdr_bufsize, int, S_IRUGO);
 MODULE_PARM_DESC(wdr_bufsize, "Wdr Buf Size");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list
 {
@@ -993,7 +981,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret)
@@ -1007,7 +994,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

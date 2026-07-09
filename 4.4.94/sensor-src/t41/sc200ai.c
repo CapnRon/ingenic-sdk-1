@@ -20,7 +20,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 #define SENSOR_NAME "sc200ai"
 // ============================================================================
@@ -50,23 +49,6 @@ static int wdr_bufsize = 6727680;  /* (2*{0x3e24,0x3e23}-10)*fps/SENSOR_OUTPUT_M
 static int shvflip = 1;
 
 static int data_type = TX_SENSOR_DATA_TYPE_WDR_DOL;
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = (SENSOR_CHIP_ID_H << 8) | SENSOR_CHIP_ID_L,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = 1920,
-	.height = 1080,
-	.rst_gpio = GPIO_PA(18),
-	.pwdn_gpio = GPIO_PC(18),
-	.boot = 0,
-	.mclk = 1,
-	.video_interface = 0,
-	.i2c_adapter = 0,
-};
 
 struct regval_list {
 	uint16_t reg_num;
@@ -1391,9 +1373,6 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 	sensor->video.min_fps = SENSOR_OUTPUT_MIN_FPS << 16 | 1;
 	ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
 
-	sensor_common_update(&sensor_info, info->rst_gpio, info->pwdn_gpio,
-			     (int)info->default_boot, (int)info->mclk,
-			     (int)info->video_interface, client->adapter->nr);
 	return 0;
 
 err_get_mclk:
@@ -1724,12 +1703,10 @@ static struct i2c_driver sensor_driver = {
 };
 
 static __init int init_sensor(void) {
-	sensor_common_init(&sensor_info);
 	return private_i2c_add_driver(&sensor_driver);
 }
 
 static __exit void exit_sensor(void) {
-	sensor_common_exit();
 	private_i2c_del_driver(&sensor_driver);
 }
 

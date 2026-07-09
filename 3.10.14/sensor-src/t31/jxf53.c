@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -67,18 +66,6 @@ MODULE_PARM_DESC(data_interface, "Sensor Date interface");
 static int sensor_max_fps = TX_SENSOR_MAX_FPS_25;
 module_param(sensor_max_fps, int, S_IRUGO);
 MODULE_PARM_DESC(sensor_max_fps, "Sensor Max Fps set interface");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.actual_fps = 0,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -848,7 +835,6 @@ static int sensor_init(struct tx_isp_subdev *sd, int enable)
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	ret = sensor_write_array(sd, wsize->regs);
 	if (ret)
 		return ret;
@@ -939,7 +925,6 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps)
 	}
 	sensor->video.fps = fps;
 
-	sensor_update_actual_fps((fps >> 16) & 0xffff);
 	sensor->video.attr->max_integration_time_native = vts - 2;
 	sensor->video.attr->integration_time_limit = vts - 2;
 	sensor->video.attr->total_height = vts;
@@ -962,7 +947,6 @@ static int sensor_set_mode(struct tx_isp_subdev *sd, int value)
 		sensor->video.mbus.colorspace = wsize->colorspace;
 		sensor->video.fps = wsize->fps;
 
-		sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 		ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
 	}
 
@@ -1176,7 +1160,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
         switch (sensor_max_fps) {
             case TX_SENSOR_MAX_FPS_30:
                 wsize = &sensor_win_sizes[0];
-                sensor_info.max_fps = 25;
                 sensor_attr.max_integration_time_native = 1350 - 2;
                 sensor_attr.integration_time_limit =1350 - 2;
                 sensor_attr.total_width = 2560;
@@ -1185,7 +1168,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
                 break;
             case TX_SENSOR_MAX_FPS_60:
                 wsize = &sensor_win_sizes[1];
-                sensor_info.max_fps = 60;
                 sensor_attr.mipi.image_twidth = 960;
                 sensor_attr.mipi.image_theight = 540;
                 sensor_attr.max_integration_time_native = 565 - 2;
@@ -1196,7 +1178,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
                 break;
             case TX_SENSOR_MAX_FPS_100:
                 wsize = &sensor_win_sizes[2];
-                sensor_info.max_fps = 100;
                 sensor_attr.mipi.image_twidth = 1280;
                 sensor_attr.mipi.image_theight = 350;
                 sensor_attr.max_integration_time_native = 375 - 2;
@@ -1223,7 +1204,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	tx_isp_subdev_init(&sensor_platform_device, sd, &sensor_ops);
 	tx_isp_set_subdevdata(sd, client);
 	tx_isp_set_subdev_hostdata(sd, sensor);
@@ -1276,7 +1256,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -1289,7 +1268,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

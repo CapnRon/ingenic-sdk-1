@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 #define SENSOR_NAME "mis4001"
 #define SENSOR_VERSION "H20230317a"
@@ -48,23 +47,6 @@ MODULE_PARM_DESC(pwdn_gpio, "Default power down GPIO NUM");
 static int shvflip = 0;
 module_param(shvflip, int, S_IRUGO);
 MODULE_PARM_DESC(shvflip, "Sensor HV Flip Enable interface");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = 2560,
-	.height = 1440,
-	.rst_gpio = -1,
-	.pwdn_gpio = -1,
-	.boot = 0,
-	.mclk = 1,
-	.video_interface = 0,
-	.i2c_adapter = 0,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -925,9 +907,6 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 	reset_gpio = info->rst_gpio;
 	pwdn_gpio = info->pwdn_gpio;
 
-	sensor_common_update(&sensor_info, info->rst_gpio, info->pwdn_gpio,
-			     (int)info->default_boot, (int)info->mclk,
-			     (int)info->video_interface, client->adapter->nr);
 	return 0;
 
 err_get_mclk:
@@ -1179,13 +1158,11 @@ static struct i2c_driver sensor_driver = {
 
 static __init int init_sensor(void)
 {
-	sensor_common_init(&sensor_info);
 	return private_i2c_add_driver(&sensor_driver);
 }
 
 static __exit void exit_sensor(void)
 {
-	sensor_common_exit();
 	private_i2c_del_driver(&sensor_driver);
 }
 

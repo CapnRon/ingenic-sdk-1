@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -109,18 +108,6 @@ static unsigned char r2f_val = 0x64;
 static unsigned char r0c_val = 0x40;
 static unsigned char r80_val = 0x02;
 
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.actual_fps = 0,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -1438,7 +1425,6 @@ static int sensor_set_mode(struct tx_isp_subdev *sd, int value)
 		sensor->video.mbus.colorspace = wsize->colorspace;
 		sensor->video.fps = wsize->fps;
 
-		sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 		ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
 	}
 
@@ -1539,7 +1525,6 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps)
 	}
 	sensor->video.fps = fps;
 
-	sensor_update_actual_fps((fps >> 16) & 0xffff);
 	sensor->video.attr->max_integration_time_native = vts - 4;
 	sensor->video.attr->integration_time_limit = vts - 4;
 	sensor->video.attr->total_height = vts;
@@ -1564,7 +1549,6 @@ static int sensor_init(struct tx_isp_subdev *sd, int enable)
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 
 	ret = sensor_write_array(sd, wsize->regs);
 	ret += sensor_read(sd, 0x2f, &r2f_val);
@@ -1864,7 +1848,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	if (data_type == TX_SENSOR_DATA_TYPE_LINEAR) {
 		if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_30) && (sensor_resolution == SENSOR_RES_200)) {
 			wsize = &sensor_win_sizes[0];
-			sensor_info.max_fps = 25;
 			sensor_attr.total_width = 0x500 * 2;//2560
 			sensor_attr.total_height = 0x546; //1350
 			sensor_attr.max_integration_time_native = 0x465 - 4;
@@ -1874,7 +1857,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_60) && (sensor_resolution == SENSOR_RES_200)) {
 			wsize = &sensor_win_sizes[3];
-			sensor_info.max_fps = 60;
 			sensor_attr.total_width = 0x253 * 4;//2380
 			sensor_attr.total_height = 0x455; //1109
 			sensor_attr.max_integration_time_native = 0x455 - 4;
@@ -1884,7 +1866,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_15 && sensor_resolution == SENSOR_RES_180)) {
 			wsize = &sensor_win_sizes[5];
-			sensor_info.max_fps = 15;
 			sensor_attr.total_width = 0xA00;//2560
 			sensor_attr.total_height = 0x465; //1350
 			sensor_attr.max_integration_time_native = 0x465 - 4;
@@ -1896,7 +1877,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_55 && sensor_resolution == SENSOR_RES_180)) {
 			wsize = &sensor_win_sizes[4];
-			sensor_info.max_fps = 55;
 			sensor_attr.total_width = 0x280 * 4;//2560
 			sensor_attr.total_height = 0x465; //1125
 			sensor_attr.max_integration_time_native = 0x465 - 4;
@@ -1908,7 +1888,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_15 && sensor_resolution == SENSOR_RES_186)) {
 			wsize = &sensor_win_sizes[6];
-			sensor_info.max_fps = 15;
 			sensor_attr.total_width = 0x280 * 4;
 			sensor_attr.total_height = 0x465;
 			sensor_attr.max_integration_time_native = 0x465 - 4;
@@ -1920,7 +1899,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_55 && sensor_resolution == SENSOR_RES_186)) {
 			wsize = &sensor_win_sizes[7];
-			sensor_info.max_fps = 55;
 			sensor_attr.total_width = 0x280 * 4;
 			sensor_attr.total_height = 0x465;
 			sensor_attr.max_integration_time_native = 0x465 - 4;
@@ -1932,7 +1910,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi),sizeof(sensor_mipi));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_MIPI) && (sensor_resolution == SENSOR_RES_30)) {
 			wsize = &sensor_win_sizes[2];
-			sensor_info.max_fps = 120;
 			sensor_attr.total_width = 0x2a2;//674
 			sensor_attr.total_height = 0x216;//534
 			sensor_attr.max_integration_time_native = 0x216 - 4;
@@ -1941,7 +1918,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 			memcpy((void*)(&(sensor_attr.mipi)),(void*)(&sensor_mipi_vga),sizeof(sensor_mipi_vga));
 		} else if ((data_interface == TX_SENSOR_DATA_INTERFACE_DVP) && (sensor_max_fps == PS5270_SENSOR_MAX_FPS_30)) {
 			wsize = &sensor_win_sizes[1];
-			sensor_info.max_fps = 25;
 			memcpy((void*)(&(sensor_attr.dvp)),(void*)(&sensor_dvp),sizeof(sensor_dvp));
 			ret = set_sensor_gpio_function(sensor_gpio_func);
 			if (ret < 0)
@@ -1971,7 +1947,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
 
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	tx_isp_subdev_init(&sensor_platform_device, sd, &sensor_ops);
 	tx_isp_set_subdevdata(sd, client);
 	tx_isp_set_subdev_hostdata(sd, sensor);
@@ -2027,7 +2002,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -2040,7 +2014,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

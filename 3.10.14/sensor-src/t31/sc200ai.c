@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -72,18 +71,6 @@ module_param(shvflip, int, S_IRUGO);
 MODULE_PARM_DESC(shvflip, "Sensor HV Flip Enable interface");
 
 static bool dpc_flag = true;
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.actual_fps = 0,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -1010,7 +997,6 @@ struct tx_isp_sensor *sensor = sd_to_sensor_device(sd);
 	sensor->video.mbus.field = V4L2_FIELD_NONE;
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
-	sensor_update_actual_fps((wsize->fps >> 16) & 0xffff);
 	ret = sensor_write_array(sd, wsize->regs);
 	if (ret)
 		return ret;
@@ -1088,7 +1074,6 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps)
 		return ret;
 	}
 	sensor->video.fps = fps;
-	sensor_update_actual_fps((fps >> 16) & 0xffff);
 	sensor->video.attr->max_integration_time_native = vts - 4;
 	sensor->video.attr->integration_time_limit = vts - 4;
 	sensor->video.attr->total_height = vts;
@@ -1360,7 +1345,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	switch(sensor_max_fps) {
 	case TX_SENSOR_MAX_FPS_25:
 		wsize = &sensor_win_sizes[0];
-		sensor_info.max_fps = 25;
 		sensor_attr.max_integration_time_native = 0x546 - 4;
                 sensor_attr.integration_time_limit = 0x546 - 4;
                 sensor_attr.total_width = 2200;
@@ -1369,7 +1353,6 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 		break;
 	case TX_SENSOR_MAX_FPS_60:
 		wsize = &sensor_win_sizes[1];
-		sensor_info.max_fps = 60;
 		sensor_attr.max_integration_time_native = 1125 - 4;
 		sensor_attr.integration_time_limit = 1125 - 4;
 		sensor_attr.total_width = 2200;
@@ -1449,7 +1432,6 @@ static struct i2c_driver sensor_driver = {
 static __init int init_sensor(void)
 {
 	int ret = 0;
-	sensor_common_init(&sensor_info);
 
 	ret = private_driver_get_interface();
 	if (ret) {
@@ -1462,7 +1444,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
 	private_i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

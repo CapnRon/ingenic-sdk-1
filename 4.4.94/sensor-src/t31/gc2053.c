@@ -15,7 +15,6 @@
 #include <soc/gpio.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 #include <txx-funcs.h>
 
 // ugly hack, but oh well
@@ -76,17 +75,6 @@ MODULE_PARM_DESC(sensor_max_fps, "Sensor Max Fps set interface");
 static int shvflip = 0;
 module_param(shvflip, int, S_IRUGO);
 MODULE_PARM_DESC(shvflip, "Sensor HV Flip Enable interface");
-
-static struct sensor_info sensor_info = {
-	.name = SENSOR_NAME,
-	.chip_id = SENSOR_CHIP_ID,
-	.version = SENSOR_VERSION,
-	.min_fps = SENSOR_OUTPUT_MIN_FPS,
-	.max_fps = SENSOR_OUTPUT_MAX_FPS,
-	.chip_i2c_addr = SENSOR_I2C_ADDRESS,
-	.width = SENSOR_MAX_WIDTH,
-	.height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     unsigned char reg_num;
@@ -1930,13 +1918,11 @@ static struct i2c_driver sensor_driver = {
 };
 
 static __init int init_sensor(void) {
-	sensor_common_init(&sensor_info);
 	return i2c_add_driver(&sensor_driver);
 }
 
 static __exit void exit_sensor(void) {
 	i2c_del_driver(&sensor_driver);
-	sensor_common_exit();
 }
 
 module_init(init_sensor);

@@ -14,7 +14,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -1979,7 +1978,6 @@ static int sensor_probe(struct i2c_client *client,
 
 	if (sensor_resolution == TX_SENSOR_RES_200) {
 		wsize = &sensor_win_sizes[0];
-		sensor_info.max_fps = 25;
 		sensor_attr.total_width = 0xe00 / 2;
 		sensor_attr.total_height = 0x77f + 1;
 		sensor_attr.max_integration_time_native = 0x77f - 2;
@@ -1991,7 +1989,6 @@ static int sensor_probe(struct i2c_client *client,
 		sensor_attr.mipi.image_theight= 1536;
 	} else if (sensor_resolution == TX_SENSOR_RES_30) {
 		wsize = &sensor_win_sizes[1];
-		sensor_info.max_fps = 110;
 		sensor_attr.total_width = 0xc4e / 2;
 		sensor_attr.total_height = 0x1ef + 1;
 		sensor_attr.max_integration_time_native = 0x1ef - 2;
@@ -2003,7 +2000,6 @@ static int sensor_probe(struct i2c_client *client,
 		sensor_attr.mipi.image_theight= 480;
 	} else if (sensor_resolution == TX_SENSOR_RES_100) {
 		wsize = &sensor_win_sizes[2];
-		sensor_info.max_fps = 45;
 		sensor_attr.total_width = 0xe00 / 2;
 		sensor_attr.total_height = 0x77f + 1;
 		sensor_attr.max_integration_time_native = 0x77f - 2;
