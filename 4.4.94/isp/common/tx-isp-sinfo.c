@@ -34,6 +34,16 @@
 #include <linux/seq_file.h>
 #include <tx-isp-common.h>
 
+/* T10/T20 use the older v4l2-flavored ISP core: the sensor's subdev is
+ * a struct v4l2_subdev and the client hangs off v4l2 subdevdata. */
+#if defined(CONFIG_SOC_T10) || defined(CONFIG_SOC_T20)
+#define SINFO_V4L2_FLAVOR 1
+#include <media/v4l2-device.h>
+typedef struct v4l2_subdev sinfo_subdev_t;
+#else
+typedef struct tx_isp_subdev sinfo_subdev_t;
+#endif
+
 #define SINFO_MAX_SENSORS 4
 
 /* Board-wiring defaults are a per-SoC property, not per-sensor. */
@@ -147,9 +157,13 @@ static struct tx_isp_sensor_attribute *slot_attr(struct sinfo_slot *s)
 
 static struct i2c_client *slot_client(struct sinfo_slot *s)
 {
-	if (s->sensor)
-		return tx_isp_get_subdevdata(&s->sensor->sd);
-	return NULL;
+	if (!s->sensor)
+		return NULL;
+#ifdef SINFO_V4L2_FLAVOR
+	return v4l2_get_subdevdata(&s->sensor->sd);
+#else
+	return tx_isp_get_subdevdata(&s->sensor->sd);
+#endif
 }
 
 static int sinfo_show(struct seq_file *m, void *v)
@@ -392,7 +406,7 @@ void tx_isp_sinfo_driver_del(struct i2c_driver *drv)
 }
 EXPORT_SYMBOL(tx_isp_sinfo_driver_del);
 
-int tx_isp_sinfo_sensor_bind(struct tx_isp_subdev *sd, struct module *owner)
+int tx_isp_sinfo_sensor_bind(sinfo_subdev_t *sd, struct module *owner)
 {
 	struct tx_isp_sensor *sensor;
 	int i;
@@ -442,7 +456,7 @@ int tx_isp_sinfo_sensor_bind(struct tx_isp_subdev *sd, struct module *owner)
 }
 EXPORT_SYMBOL(tx_isp_sinfo_sensor_bind);
 
-void tx_isp_sinfo_sensor_unbind(struct tx_isp_subdev *sd, struct module *owner)
+void tx_isp_sinfo_sensor_unbind(sinfo_subdev_t *sd, struct module *owner)
 {
 	struct tx_isp_sensor *sensor;
 	int i;

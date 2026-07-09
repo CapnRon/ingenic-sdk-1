@@ -27,6 +27,7 @@ SRCS := $(DIR)/tx-isp-vic.o \
 	$(DIR)/apical-isp/system_semaphore.o \
 	$(DIR)/apical-isp/sensor_drv.o \
 	$(DIR)/apical-isp/system_chardev.o \
+	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.o \
 
 OBJS := $(SRCS:%.c=%.o) $(ASM_SRCS:%.S=%.o)
 OBJS += $(KERNEL_VERSION)/sdk/$(SOC_FAMILY)/$(ISP_FW_VER)/libt20-firmware.a

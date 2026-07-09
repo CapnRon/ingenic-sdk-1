@@ -496,13 +496,20 @@ static struct platform_driver tx_isp_driver = {
 	},
 };
 
+extern int tx_isp_sinfo_init(void);
+extern void tx_isp_sinfo_exit(void);
+
 static int __init tx_isp_init(void)
 {
-	return platform_driver_register(&tx_isp_driver);
+	int ret = platform_driver_register(&tx_isp_driver);
+	if (!ret)
+		tx_isp_sinfo_init();
+	return ret;
 }
 
 static void __exit tx_isp_exit(void)
 {
+	tx_isp_sinfo_exit();
 	platform_driver_unregister(&tx_isp_driver);
 }
 
