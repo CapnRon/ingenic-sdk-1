@@ -53,11 +53,30 @@ SENSOR_MODEL=gc4653 ./build.sh t31 3.10 \
 | `CONFIG_INGENIC_SOC_NNA` | on for t40/t41/a1 | neural accelerator |
 | `CONFIG_INGENIC_MPSYS` / `_JZ_DTRNG` | on for t40/t41 | mpsys + hardware TRNG |
 | `CONFIG_INGENIC_GPIO_USERKEYS` | on for 3.10 | GPIO buttons |
-| `CONFIG_INGENIC_JZ_AES` | on for 3.10 | hardware AES (`/dev/aes`) |
-| `CONFIG_INGENIC_TCU_ALLOC` | off | TCU channel allocator (motor needs it) |
-| `CONFIG_INGENIC_PWM` | off | superseded by the standalone ingenic-pwm |
-| `CONFIG_INGENIC_MOTOR` / `_MOTOR_SPI` | off | superseded by the standalone thingino-motors |
+| `CONFIG_INGENIC_JZ_AES` | on for 3.10 | hardware AES (`/dev/aes`); under thingino, selected by the mbedtls hardware-AES option |
+| `CONFIG_INGENIC_TCU_ALLOC` | on for 3.10 | TCU channel allocator; the motor driver links its symbols |
+| `CONFIG_INGENIC_PWM` | off | pwm_core / pwm_hal; kernel side of the ingenic-pwm userspace utility |
+| `CONFIG_INGENIC_MOTOR` / `_MOTOR_SPI` | off | PTZ motor driver; kernel side of the thingino-motors userspace utility |
 
 Enabling a component on a SoC that lacks it is allowed but will fail to
 build. Under thingino these switches are also exposed in menuconfig
-(package -> Ingenic SDK -> SDK components).
+(package -> Ingenic SDK -> SDK components), where the camera pipeline
+(ISP, sensor, AVPU) follows the selected device type.
+
+## Licensing
+
+The kernel driver source in this repository is licensed **GPL-2.0-or-later**,
+as declared by the `SPDX-License-Identifier` headers in the source files and
+the `MODULE_LICENSE("GPL")` markings in the modules. Being Linux kernel
+modules, they must be built and distributed under GPL-compatible terms.
+
+The precompiled ISP/audio/AVPU firmware archives (the `*.a` and `*.o_shipped`
+blobs under `<kernel>/sdk/`, `<kernel>/misc/`, etc.) are **proprietary
+firmware, copyright their respective owners** (Ingenic Semiconductor and its
+vendors). They are redistributed here for use with these drivers; they are
+not covered by the GPL and no source is available for them. Linking the GPL
+drivers against these vendor blobs is what the Ingenic BSP does, and the
+resulting modules load the firmware at runtime.
+
+If you redistribute builds of this SDK, keep the driver source available
+under the GPL and preserve the firmware copyright notices.
