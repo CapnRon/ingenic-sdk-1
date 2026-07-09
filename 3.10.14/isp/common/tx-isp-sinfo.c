@@ -70,7 +70,6 @@ typedef struct tx_isp_subdev sinfo_subdev_t;
 enum sinfo_key {
 	SINFO_NAME,
 	SINFO_CHIP_ID,
-	SINFO_VERSION,
 	SINFO_I2C_ADDR,
 	SINFO_I2C_ADAPTER,
 	SINFO_WIDTH,
@@ -90,7 +89,6 @@ enum sinfo_key {
 static const char *const sinfo_key_name[SINFO_NKEYS] = {
 	[SINFO_NAME]            = "name",
 	[SINFO_CHIP_ID]         = "chip_id",
-	[SINFO_VERSION]         = "version",
 	[SINFO_I2C_ADDR]        = "i2c_addr",
 	[SINFO_I2C_ADAPTER]     = "i2c_adapter",
 	[SINFO_WIDTH]           = "width",
@@ -194,10 +192,6 @@ static int sinfo_show(struct seq_file *m, void *v)
 	case SINFO_CHIP_ID:
 		if (attr)
 			seq_printf(m, "0x%x\n", attr->chip_id);
-		break;
-	case SINFO_VERSION:
-		if (s->owner && s->owner->version)
-			seq_printf(m, "%s\n", s->owner->version);
 		break;
 	case SINFO_I2C_ADDR:
 		if (client)

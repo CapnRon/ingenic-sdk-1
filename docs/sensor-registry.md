@@ -87,7 +87,7 @@ carried; the registry reads `sensor->video.fps` live instead.)
 /proc/jz/sensor/
   count                  number of registered sensors
   sensor0/               index-keyed: dual-same-model safe
-    name chip_id version i2c_addr i2c_adapter width height fps status
+    name chip_id i2c_addr i2c_adapter width height fps status
     min_fps max_fps                    (T41-class only)
     mclk boot video_interface          (T40/T41-class only)
     rst_gpio pwdn_gpio                 (T40/T41-class only)
@@ -118,15 +118,15 @@ fallback is now per-index — giving multi-sensor zero-config for free).
 
 | family | kver | core | subdev flavor | keys | status |
 |---|---|---|---|---|---|
-| t20 (t10 is a symlink) | 3.10 | open | v4l2 | 9 | HW: Wyze V2 / jxf23, zero-config |
-| t21 | 3.10 | blob | tx-isp | 9 | compile-gated |
-| t23 | 3.10 | blob | tx-isp | 9 | HW: Cinnado D1 / sc2336, zero-config; dual firmware with 2 slots |
-| t30 | 3.10 | open | tx-isp | 9 | hooked; gate needs a T30 kernel tree |
-| t31 | 3.10 | blob | tx-isp | 9 | HW: Z55 / gc4653 |
-| t41 | 3.10 | blob | tx-isp | 16 | hooked, unverified (no profile targets it) |
-| t31 (c100 is a symlink) | 4.4 | blob | tx-isp | 9 | compile-gated |
-| t40 | 4.4 | blob | tx-isp | 14 | compile-gated (imx307) |
-| t41 | 4.4 | blob | tx-isp | 16 | HW: T41NQ / gc4023, zero-config; 2 slots + simultaneous binds |
+| t20 (t10 is a symlink) | 3.10 | open | v4l2 | 8 | HW: Wyze V2 / jxf23, zero-config |
+| t21 | 3.10 | blob | tx-isp | 8 | compile-gated |
+| t23 | 3.10 | blob | tx-isp | 8 | HW: Cinnado D1 / sc2336, zero-config; dual firmware with 2 slots |
+| t30 | 3.10 | open | tx-isp | 8 | HW: Wyze VDB1 / sc4236, full gauntlet |
+| t31 | 3.10 | blob | tx-isp | 8 | HW: Z55 / gc4653 |
+| t41 | 3.10 | blob | tx-isp | 15 | hooked, unverified (no profile targets it) |
+| t31 (c100 is a symlink) | 4.4 | blob | tx-isp | 8 | compile-gated |
+| t40 | 4.4 | blob | tx-isp | 13 | compile-gated (imx307) |
+| t41 | 4.4 | blob | tx-isp | 15 | HW: T41NQ / gc4023, zero-config; 2 slots + simultaneous binds |
 
 Not covered, and why: **t32/t33** have no working stack yet. **t41zrt** (both trees) and
 **t40 on 3.10** ship sensor drivers but no ISP Kbuild or module wrapper, so no build
