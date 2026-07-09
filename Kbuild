@@ -48,8 +48,8 @@ CONFIG_INGENIC_MPSYS          ?= $(if $(has_mpsys),y,n)
 CONFIG_INGENIC_JZ_DTRNG       ?= $(if $(has_mpsys),y,n)
 CONFIG_INGENIC_GPIO_USERKEYS  ?= $(if $(is_a1),n,$(if $(is_k310),y,n))
 CONFIG_INGENIC_JZ_AES         ?= $(if $(is_a1),n,$(if $(is_k310),y,n))
-# TCU allocator: central TCU-channel ownership registry. motor.ko links
-# against its symbols, and nothing else provides them, so it stays on.
+# TCU allocator: central TCU-channel ownership registry. Both motor.ko and
+# pwm_core.ko link against its symbols, and nothing else provides them.
 CONFIG_INGENIC_TCU_ALLOC      ?= $(if $(is_a1),n,$(if $(is_k310),y,n))
 # The PWM and motor drivers here are superseded by the standalone
 # ingenic-pwm and thingino-motors projects; opt in if you want this copy.
@@ -60,6 +60,19 @@ CONFIG_INGENIC_A1_MEDIA       ?= $(if $(is_a1),y,n)
 
 # audio flavour: T23 uses oss3 even on 3.10; otherwise it follows the kernel
 CONFIG_INGENIC_AUDIO_VARIANT  ?= $(if $(is_t23),oss3,$(if $(is_k310),oss2,oss3))
+
+# Dependency enforcement: pwm_core.ko and motor.ko both link tcu_alloc's
+# exported symbols (tcu_alloc_claim/release/set_max_channels). The allocator
+# is K310-only, so force it on whenever either driver is built there, even if
+# the caller passed CONFIG_INGENIC_TCU_ALLOC=n (e.g. a PWM board with no motor).
+ifeq ($(is_k310),y)
+ifeq ($(CONFIG_INGENIC_PWM),y)
+override CONFIG_INGENIC_TCU_ALLOC := y
+endif
+ifeq ($(CONFIG_INGENIC_MOTOR),y)
+override CONFIG_INGENIC_TCU_ALLOC := y
+endif
+endif
 
 ccflags-y := -DRELEASE -DUSER_BIT_32 -DKERNEL_BIT_32 -Wno-date-time -D_GNU_SOURCE
 ccflags-y += -I$(src)/$(kver)/isp/$(soc)/include
@@ -80,7 +93,7 @@ ifeq ($(CONFIG_INGENIC_JZ_AES),y)
     include $(src)/$(kver)/misc/jz-aes/Kbuild
 endif
 
-# TCU allocator: central ownership registry. motor.ko needs its symbols.
+# TCU allocator: central ownership registry. pwm_core.ko and motor.ko need its symbols.
 ifeq ($(CONFIG_INGENIC_TCU_ALLOC),y)
     include $(src)/$(kver)/misc/tcu_alloc/Kbuild
 endif
