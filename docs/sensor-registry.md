@@ -124,7 +124,7 @@ fallback is now per-index — giving multi-sensor zero-config for free).
 | t30 | 3.10 | open | tx-isp | 8 | HW: Wyze VDB1 / sc4236, full gauntlet |
 | t31 | 3.10 | blob | tx-isp | 8 | HW: Z55 / gc4653 |
 | t41 | 3.10 | blob | tx-isp | 15 | hooked, unverified (no profile targets it) |
-| t31 (c100 is a symlink) | 4.4 | blob | tx-isp | 8 | compile-gated |
+| t31 (c100 is a symlink) | 4.4 | blob | tx-isp | 8 | hooked; reached only via the single c100 profile, not yet compile-gated |
 | t40 | 4.4 | blob | tx-isp | 13 | compile-gated (imx307) |
 | t41 | 4.4 | blob | tx-isp | 15 | HW: T41NQ / gc4023, zero-config; 2 slots + simultaneous binds |
 
