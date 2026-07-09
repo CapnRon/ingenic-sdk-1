@@ -116,18 +116,23 @@ fallback is now per-index — giving multi-sensor zero-config for free).
 
 ## Family support matrix
 
-| family | kver | core | subdev flavor | keys | validated |
+| family | kver | core | subdev flavor | keys | status |
 |---|---|---|---|---|---|
-| t10 (=t20) | 3.10 | open | v4l2 | 9 | via t20 |
-| t20 | 3.10 | open | v4l2 | 9 | HW (Wyze V2 / jxf23, zero-config) |
-| t21 | 3.10 | blob | tx-isp | 9 | compile pending |
-| t23 | 3.10 | blob | tx-isp | 9 | HW (Cinnado D1 / sc2336, zero-config) |
-| t30 | 3.10 | open | tx-isp | 9 | compile pending |
-| t31 | 3.10 | blob | tx-isp | 9 | HW (Z55 / gc4653) |
-| t31 (=c100) | 4.4 | blob | tx-isp | 9 | compile |
-| t40 | 4.4 | blob | tx-isp | 14 | compile (imx307) |
-| t41 | 4.4 | blob | tx-isp | 16 | HW (T41NQ / gc4023, zero-config) |
-| t32, t41zrt | — | — | — | — | skipped: no working stack / no profiles |
+| t20 (t10 is a symlink) | 3.10 | open | v4l2 | 9 | HW: Wyze V2 / jxf23, zero-config |
+| t21 | 3.10 | blob | tx-isp | 9 | compile-gated |
+| t23 | 3.10 | blob | tx-isp | 9 | HW: Cinnado D1 / sc2336, zero-config; dual firmware with 2 slots |
+| t30 | 3.10 | open | tx-isp | 9 | hooked; gate needs a T30 kernel tree |
+| t31 | 3.10 | blob | tx-isp | 9 | HW: Z55 / gc4653 |
+| t41 | 3.10 | blob | tx-isp | 16 | hooked, unverified (no profile targets it) |
+| t31 (c100 is a symlink) | 4.4 | blob | tx-isp | 9 | compile-gated |
+| t40 | 4.4 | blob | tx-isp | 14 | compile-gated (imx307) |
+| t41 | 4.4 | blob | tx-isp | 16 | HW: T41NQ / gc4023, zero-config; 2 slots + simultaneous binds |
+
+Not covered, and why: **t32/t33** have no working stack yet. **t41zrt** (both trees) and
+**t40 on 3.10** ship sensor drivers but no ISP Kbuild or module wrapper, so no build
+path reaches them; their drivers were swept but not hooked. **a1** has no ISP or
+sensors. Every family that `build.sh` accepts and that can link a `tx-isp` module is
+hooked.
 
 Validated = stage-1 at insmod, stage-2 live under a streaming rvd,
 teardown/reload cycles, and a 2000-read cat race against rmmod (the
