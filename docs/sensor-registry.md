@@ -94,6 +94,14 @@ carried; the registry reads `sensor->video.fps` live instead.)
   sensor1/ ...
 ```
 
+`sensorN` is a **stable slot number, not a dense index**. A slot is claimed
+when a driver registers and released when it unregisters, so removing the
+module behind `sensor0` while `sensor1` is still loaded leaves `sensor1` at
+index 1 and reports `count = 1`. This is deliberate: renumbering the
+survivor would silently change the identity of a sensor a consumer is
+already talking to. Enumerate by globbing `sensorN/`, not by iterating
+`0..count-1`.
+
 Per-family key sets follow the structs: T31-class register_info has no
 wiring fields, so those files simply do not exist there; `min_fps`/`max_fps`
 live in `tx_isp_video_in` only on T41. Board-wiring defaults (mclk 1,
