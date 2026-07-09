@@ -31,7 +31,8 @@ SRCS := $(DIR)/platform.o \
 	$(DIR)/tx-isp-ldc.o \
 	$(DIR)/tx-isp-mscaler.o \
 	$(DIR)/tx-isp-frame-channel.o \
-	$(DIR)/tx-isp-device.o
+	$(DIR)/tx-isp-device.o \
+	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.o
 
 OBJS := $(SRCS:%.c=%.o) $(ASM_SRCS:%.S=%.o)
 OBJS += $(KERNEL_VERSION)/sdk/$(SOC_FAMILY)/$(ISP_FW_VER)/lib$(SOC_FAMILY)-firmware.a

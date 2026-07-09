@@ -2,7 +2,8 @@ ISP_FW_VER=1.0.33
 
 SRCS := $(DIR)/tx-isp-debug.c \
 	$(DIR)/tx-isp-module.c \
-	$(DIR)/txx-funcs.c
+	$(DIR)/txx-funcs.c \
+	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.c
 
 OBJS := $(SRCS:%.c=%.o) $(ASM_SRCS:%.S=%.o)
 OBJS += $(KERNEL_VERSION)/sdk/$(SOC_FAMILY)/$(ISP_FW_VER)/lib$(SOC_FAMILY)-firmware.a

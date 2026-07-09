@@ -7,7 +7,8 @@ endif
 COMPILER_VER=540
 
 SRCS := $(DIR)/tx-isp-debug.c \
-	$(DIR)/tx-isp-module.c
+	$(DIR)/tx-isp-module.c \
+	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.c
 
 OBJS := $(SRCS:%.c=%.o) $(ASM_SRCS:%.S=%.o)
 OBJS += $(KERNEL_VERSION)/sdk/$(SOC_FAMILY)/$(ISP_FW_VER)/lib$(SOC_FAMILY)-firmware-$(COMPILER_VER).a

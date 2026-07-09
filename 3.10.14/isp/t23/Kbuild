@@ -2,7 +2,8 @@ ISP_FW_VER=1.3.0
 COMPILER_VER=540
 
 SRCS := $(DIR)/tx-isp-debug.c \
-	$(DIR)/tx-isp-module.c
+	$(DIR)/tx-isp-module.c \
+	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.c
 
 OBJS := $(SRCS:%.c=%.o) $(ASM_SRCS:%.S=%.o)
 ifdef CONFIG_MULTI_SENSOR

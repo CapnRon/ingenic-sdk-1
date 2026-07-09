@@ -61,6 +61,9 @@ typedef struct tx_isp_subdev sinfo_subdev_t;
  */
 #if defined(CONFIG_SOC_T40) || defined(CONFIG_SOC_T41)
 #define SINFO_HAVE_REGINFO_WIRING 1
+#endif
+/* T41 only: T40's tx_isp_video_in lacks min_fps/max_fps */
+#if defined(CONFIG_SOC_T41)
 #define SINFO_HAVE_VIDEO_MINMAX_FPS 1
 #endif
 

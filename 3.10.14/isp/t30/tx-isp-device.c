@@ -29,6 +29,9 @@
 #include "videoin/tx-isp-video-in.h"
 #include "apical-isp/tx-isp-core.h"
 
+extern int tx_isp_sinfo_init(void);
+extern void tx_isp_sinfo_exit(void);
+
 extern struct platform_device tx_isp_platform_device;
 
 #define TX_ISP_DRIVER_VERSION "H20190725b"
@@ -1421,12 +1424,15 @@ static int __init tx_isp_init(void)
 	ret = private_platform_driver_register(&tx_isp_driver);
 	if(ret){
 		private_platform_device_unregister(&tx_isp_platform_device);
+		return ret;
 	}
+	tx_isp_sinfo_init();
 	return ret;
 }
 
 static void __exit tx_isp_exit(void)
 {
+	tx_isp_sinfo_exit();
 	private_platform_driver_unregister(&tx_isp_driver);
 	private_platform_device_unregister(&tx_isp_platform_device);
 }
