@@ -146,6 +146,34 @@ static inline void __sinfo_subdev_deinit(struct tx_isp_subdev *sd,
 #define tx_isp_subdev_deinit(sd) \
 	__sinfo_subdev_deinit((sd), THIS_MODULE)
 
+
+/*
+ * A few vendor drivers call the plain i2c_add_driver() instead of the
+ * private_* wrapper. Catch those too: i2c_add_driver is a kernel macro,
+ * so #undef it and call i2c_register_driver() with the driver's module.
+ */
+static inline int __sinfo_i2c_add_driver_plain(struct i2c_driver *drv,
+					       int def_i2c_addr,
+					       struct module *owner)
+{
+	int ret = i2c_register_driver(owner, drv);
+	if (!ret)
+		tx_isp_sinfo_driver_add(drv, def_i2c_addr, owner);
+	return ret;
+}
+
+static inline void __sinfo_i2c_del_driver_plain(struct i2c_driver *drv)
+{
+	tx_isp_sinfo_driver_del(drv);
+	(i2c_del_driver)(drv);
+}
+
+#undef i2c_add_driver
+#define i2c_add_driver(drv) \
+	__sinfo_i2c_add_driver_plain((drv), SENSOR_I2C_ADDRESS, THIS_MODULE)
+#define i2c_del_driver(drv) \
+	__sinfo_i2c_del_driver_plain((drv))
+
 #endif /* TX_ISP_SINFO_NO_HOOK */
 
 #endif// __TX_SENSOR_COMMON_H__
