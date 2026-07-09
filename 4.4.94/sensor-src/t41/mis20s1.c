@@ -29,6 +29,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define TVERSION "H20250116a"
 #define SENSOR_VERSION  "H20250430a"
 
@@ -451,7 +453,7 @@ struct tx_isp_sensor_attribute mis20s1_attr={
 	.chip_id = MIS20S1_CHIP_ID,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
 	.max_again = 596378,//327680,//393216,

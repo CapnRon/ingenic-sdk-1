@@ -28,6 +28,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define SC5336P_CHIP_ID_H	(0xce)
 #define SC5336P_CHIP_ID_L	(0x50)
 #define SC5336P_REG_END		0xffff
@@ -281,7 +283,7 @@ struct tx_isp_sensor_attribute sc5336p_attr={
 	.chip_id = 0xce50,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.max_again = 327680,
 	.max_dgain = 0,
 	.min_integration_time = 2,

@@ -26,6 +26,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x3c
+
 #define TVERSION "V20230103a"
 #define SENSOR_VERSION  "H20241125a"
 
@@ -420,7 +422,7 @@ struct tx_isp_sensor_attribute os02n10_attr = {
 	.chip_id = 0x53024e10,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = V4L2_SBUS_MASK_SAMPLE_8BITS | V4L2_SBUS_MASK_ADDR_8BITS,
-	.cbus_device = 0x3c,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.sensor_ctrl.alloc_again = os02n10_alloc_again,
 	.sensor_ctrl.alloc_dgain = os02n10_alloc_dgain,
 };

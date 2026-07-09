@@ -27,6 +27,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x1a
+
 #define IMX585_CHIP_ID_H        (0x00)
 #define IMX585_CHIP_ID_L        (0x07)
 #define IMX585_REG_END          0xffff
@@ -132,7 +134,7 @@ struct tx_isp_sensor_attribute imx585_attr={
 		.chip_id = 0x0007,
 		.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 		.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-		.cbus_device = 0x1a,
+		.cbus_device = SENSOR_I2C_ADDRESS,
 		.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
 		.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 		.max_again = 589824,

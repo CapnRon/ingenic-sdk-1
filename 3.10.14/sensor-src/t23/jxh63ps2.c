@@ -24,6 +24,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x40
+
 #define JXH63P_CHIP_ID_H	(0x08)
 #define JXH63P_CHIP_ID_L	(0x48)
 #define JXH63P_REG_END		0xff
@@ -220,7 +222,7 @@ struct tx_isp_sensor_attribute jxh63ps2_attr={
 	.chip_id = 0x848,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = V4L2_SBUS_MASK_SAMPLE_8BITS | V4L2_SBUS_MASK_ADDR_8BITS,
-	.cbus_device = 0x40,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_DVP,
 	.dvp = {
 		.mode = SENSOR_DVP_HREF_MODE,

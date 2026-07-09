@@ -25,6 +25,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x40
+
 #define JXK362P_CHIP_ID_H (0x08)
 #define JXK362P_CHIP_ID_L (0x47)
 #define JXK362P_REG_END 0xff
@@ -211,7 +213,7 @@ struct tx_isp_sensor_attribute jxk362p_attr = {
 	.chip_id = 0x847,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_8BITS,
-	.cbus_device = 0x40,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
 	.max_again = 324678,

@@ -1,5 +1,7 @@
 ISP_FW_VER=1.3.1
 
+ldflags-y += --no-warn-mismatch
+
 SRCS := $(DIR)/tx-isp-funcs.c \
 	$(DIR)/tx-isp-module.c \
 	$(KERNEL_VERSION)/isp/common/tx-isp-sinfo.c

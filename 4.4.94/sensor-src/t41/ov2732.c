@@ -27,6 +27,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x36
+
 #define OV2732_CHIP_ID_H	(0x27)
 #define OV2732_CHIP_ID_L	(0x32)
 #define OV2732_REG_END		0xffff
@@ -184,7 +186,7 @@ struct tx_isp_sensor_attribute ov2732_attr={
 	.chip_id = 0x2732,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x36, //1->0x10
+	.cbus_device = SENSOR_I2C_ADDRESS, //1->0x10
 	.max_again = 259142,
 	.max_dgain = 0,
 	.min_integration_time = 2,

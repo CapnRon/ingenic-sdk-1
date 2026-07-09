@@ -27,6 +27,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x36
+
 #define TVERSION "V20231127a"
 #define SENSOR_VERSION  "H20240222a"
 
@@ -271,7 +273,7 @@ struct tx_isp_sensor_attribute ov04c10_attr = {
         .chip_id = 0x530443,
         .cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
         .cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-        .cbus_device = 0x36,
+        .cbus_device = SENSOR_I2C_ADDRESS,
         .sensor_ctrl.alloc_again = ov04c10_alloc_again,
         .sensor_ctrl.alloc_dgain = ov04c10_alloc_dgain,
 #ifdef SENSOR_WDR_2_FRAME

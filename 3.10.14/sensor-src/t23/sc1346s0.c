@@ -25,6 +25,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define sc1346_CHIP_ID_H	(0xda)
 #define sc1346_CHIP_ID_L	(0x4d)
 #define sc1346_REG_END		0xffff
@@ -297,7 +299,7 @@ struct tx_isp_sensor_attribute sc1346_attr={
 	.chip_id = 0xda4d,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = V4L2_SBUS_MASK_SAMPLE_8BITS | V4L2_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.mipi = {
 		.mode = SENSOR_MIPI_OTHER_MODE,

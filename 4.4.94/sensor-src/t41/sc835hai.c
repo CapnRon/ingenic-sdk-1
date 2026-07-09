@@ -29,6 +29,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define SC835HAI_CHIP_ID_H	(0xc1)
 #define SC835HAI_CHIP_ID_L	(0x70)
 #define SC835HAI_REG_END	0xffff
@@ -343,7 +345,7 @@ struct tx_isp_sensor_attribute sc835hai_attr={
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_WDR_DOL,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.max_again = 364527,
 	.max_dgain = 0,
 	.min_integration_time = 2,

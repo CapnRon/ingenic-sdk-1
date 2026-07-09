@@ -23,6 +23,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x40
+
 #define jxf35_CHIP_ID_H	(0x0f)
 #define jxf35_CHIP_ID_L	(0x35)
 #define jxf35_REG_END		0xff
@@ -269,7 +271,7 @@ struct tx_isp_sensor_attribute jxf35_attr={
 	.chip_id = 0xf35,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x40,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
 	.max_again = 259142,

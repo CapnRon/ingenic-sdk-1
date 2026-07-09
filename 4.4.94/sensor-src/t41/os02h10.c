@@ -26,6 +26,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x3c
+
 
 #define OS02H10_CHIP_ID_H	(0x53)
 #define OS02H10_CHIP_ID_M0	(0x02)
@@ -201,7 +203,7 @@ struct tx_isp_sensor_attribute os02h10_attr = {
 	.chip_id = 0x53024810,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_8BITS,
-	.cbus_device = 0x3c,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.mipi = {
 		.mode = SENSOR_MIPI_OTHER_MODE,

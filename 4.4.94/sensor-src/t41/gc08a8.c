@@ -27,6 +27,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x31
+
 #define GC08A8_CHIP_ID_H (0x08)
 #define GC08A8_CHIP_ID_L (0xa8)
 #define GC08A8_REG_END 0xffff
@@ -375,7 +377,7 @@ struct tx_isp_sensor_attribute gc08a8_attr = {
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
-	.cbus_device = 0x31,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.max_again = 262144,
 	.max_dgain = 0,
 	.expo_fs = 1,

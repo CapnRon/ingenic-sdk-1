@@ -25,6 +25,8 @@
 #include <tx-isp-common.h>
 #include <sensor-common.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define SC431HAI_CHIP_ID_H	(0xcd)
 #define SC431HAI_CHIP_ID_L	(0x6b)
 #define SC431HAI_REG_END	0xffff
@@ -309,7 +311,7 @@ struct tx_isp_sensor_attribute sc431hai_attr={
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.max_again = 367015,
 	.max_dgain = 0,
 	.integration_time_apply_delay = 2,

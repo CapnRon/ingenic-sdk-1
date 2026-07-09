@@ -14,6 +14,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x35
+
 #define CV8001_CHIP_ID_L	0x01
 #define CV8001_CHIP_ID_H	0x80
 #define CV8001_REG_END		0xffff
@@ -885,7 +887,7 @@ struct tx_isp_sensor_attribute cv8001_attr={
 	.chip_id = 0x8001,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x35,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.total_width = CV8001_W_SIZE,
 	.total_height = CV8001_30FPS_VTS,
 	.max_again = 589824,

@@ -27,6 +27,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x36
+
 #define OS04L10_CHIP_ID_H	(0x53)
 #define OS04L10_CHIP_ID_M	(0x04)
 #define OS04L10_CHIP_ID_L	(0x4c)
@@ -184,7 +186,7 @@ struct tx_isp_sensor_attribute os04l10_attr={
 	.chip_id = 0x53044c,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x36,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.max_again = 259142,
 	.max_dgain = 0,
 	.min_integration_time = 2,

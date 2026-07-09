@@ -28,6 +28,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define TVERSION "V20231127a"
 #define SENSOR_VERSION  "H20241216a"
 
@@ -455,7 +457,7 @@ struct tx_isp_sensor_attribute sc231hai_attr = {
 	.chip_id = 0xcb6a,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.sensor_ctrl.alloc_again = sc231hai_alloc_again,
 	.sensor_ctrl.alloc_dgain = sc231hai_alloc_dgain,
 #ifdef SENSOR_WDR_2_FRAME

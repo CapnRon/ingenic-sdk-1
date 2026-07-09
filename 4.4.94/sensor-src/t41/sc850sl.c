@@ -31,6 +31,8 @@
 #include <sensor-common.h>
 #include <txx-funcs.h>
 
+#define SENSOR_I2C_ADDRESS 0x30
+
 #define SC850SL_CHIP_ID_H	(0x9d)
 #define SC850SL_CHIP_ID_L	(0x1e)
 #define SC850SL_REG_END		0xffff
@@ -576,7 +578,7 @@ struct tx_isp_sensor_attribute sc850sl_attr={
 	.chip_id = 0x9d1e,
 	.cbus_type = TX_SENSOR_CONTROL_INTERFACE_I2C,
 	.cbus_mask = TISP_SBUS_MASK_SAMPLE_8BITS | TISP_SBUS_MASK_ADDR_16BITS,
-	.cbus_device = 0x30,
+	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
 	.data_type = TX_SENSOR_DATA_TYPE_LINEAR,
 	.max_again = 369133,
