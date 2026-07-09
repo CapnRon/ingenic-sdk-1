@@ -99,15 +99,20 @@ echo "Using cross compiler: ${CROSS_COMPILE}gcc"
 # Set environment variables
 export CROSS_COMPILE="${CROSS_COMPILE}"
 
-# Build make command
+# Build make command.
+#
+# Component selection uses the SDK's own CONFIG_INGENIC_* switches; any of
+# them can be overridden by appending e.g. CONFIG_INGENIC_AUDIO=n to this
+# script's arguments, since command-line variables outrank the defaults in
+# Kbuild. The motor drivers are opt-in and enabled here to preserve this
+# script's historical behaviour.
 make \
 	V=1 \
-	BR2_THINGINO_MOTORS=y \
-	BR2_THINGINO_MOTORS_SPI=y \
+	CONFIG_INGENIC_MOTOR=y \
+	CONFIG_INGENIC_MOTOR_SPI=y \
 	CROSS_COMPILE="$CROSS_COMPILE" \
 	ARCH=mips \
 	SOC_FAMILY="$SOC_MODEL" \
-	CONFIG_SOC_${SOC_UPPER}=y \
 	KERNEL_VERSION="$KERNEL_VERSION" \
 	-C "$KDIR" \
 	M="$PWD" \
