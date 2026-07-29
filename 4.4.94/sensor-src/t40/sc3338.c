@@ -37,9 +37,11 @@
 #define SENSOR_REG_DELAY 0xfffe
 #define SENSOR_OUTPUT_MIN_FPS 5
 #define SENSOR_VERSION "H20220817a"
+#define MCLK 27000000
 
 static int reset_gpio = GPIO_PA(18);
 static int pwdn_gpio = GPIO_PA(19);
+char *__attribute__((weak)) sclk_name[4];
 
 struct regval_list {
 	uint16_t reg_num;
@@ -631,8 +633,6 @@ static int sensor_set_attr(struct tx_isp_subdev *sd, struct tx_isp_sensor_win_se
 	sensor->video.mbus.field = TISP_FIELD_NONE;
 	sensor->video.mbus.colorspace = wsize->colorspace;
 	sensor->video.fps = wsize->fps;
-	sensor->video.max_fps = wsize->fps;
-	sensor->video.min_fps = SENSOR_OUTPUT_MIN_FPS << 16 | 1;
 
 	return 0;
 }
@@ -772,8 +772,10 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 	struct tx_isp_sensor_register_info *info = &sensor->info;
 	struct i2c_client *client = tx_isp_get_subdevdata(sd);
 	struct clk *sclka;
+	struct clk *tclk;
 	unsigned long rate;
-	int ret;
+	uint8_t i;
+	int ret = 0;
 
 	switch (info->default_boot) {
 		case 0:
@@ -807,35 +809,50 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 
 	switch (info->mclk) {
 		case TISP_SENSOR_MCLK0:
-		case TISP_SENSOR_MCLK1:
-		case TISP_SENSOR_MCLK2:
-			sclka = private_devm_clk_get(&client->dev, SEN_MCLK);
-			sensor->mclk = private_devm_clk_get(sensor->dev, SEN_BCLK);
+			sclka = private_devm_clk_get(&client->dev, "mux_cim0");
+			sensor->mclk = private_devm_clk_get(sensor->dev, "div_cim0");
 			set_sensor_mclk_function(0);
+			break;
+		case TISP_SENSOR_MCLK1:
+			sclka = private_devm_clk_get(&client->dev, "mux_cim1");
+			sensor->mclk = private_devm_clk_get(sensor->dev, "div_cim1");
+			set_sensor_mclk_function(1);
+			break;
+		case TISP_SENSOR_MCLK2:
+			sclka = private_devm_clk_get(&client->dev, "mux_cim2");
+			sensor->mclk = private_devm_clk_get(sensor->dev, "div_cim2");
+			set_sensor_mclk_function(2);
 			break;
 		default:
 			ISP_ERROR("Have no this MCLK Source!!!\n");
 	}
 
+	if (IS_ERR(sensor->mclk)) {
+		ISP_ERROR("Cannot get sensor input clock cgu_cim\n");
+		return -1;
+	}
+
 	rate = private_clk_get_rate(sensor->mclk);
-	switch (info->default_boot) {
-		case 0:
-			if (((rate / 1000) % 27000) != 0) {
-				ret = clk_set_parent(sclka, clk_get(NULL, SEN_TCLK));
-				sclka = private_devm_clk_get(&client->dev, SEN_TCLK);
-				if (IS_ERR(sclka)) {
-					pr_err("get sclka failed\n");
-				} else {
-					rate = private_clk_get_rate(sclka);
-					if (((rate / 1000) % 27000) != 0) {
-						private_clk_set_rate(sclka, 1188000000);
-					}
+	if (((rate / 1000) % (MCLK / 1000)) != 0) {
+		uint8_t sclk_name_num = sizeof(sclk_name) / sizeof(sclk_name[0]);
+		for (i = 0; i < sclk_name_num; i++) {
+			tclk = private_devm_clk_get(&client->dev, sclk_name[i]);
+			ret = clk_set_parent(sclka, clk_get(NULL, sclk_name[i]));
+			if (IS_ERR(tclk)) {
+				pr_err("get sclka failed\n");
+			} else {
+				rate = private_clk_get_rate(tclk);
+				if (i == sclk_name_num - 1 && ((rate / 1000) % (MCLK / 1000)) != 0) {
+					private_clk_set_rate(tclk, 1188000000);
+				} else if (((rate / 1000) % (MCLK / 1000)) == 0) {
+					break;
 				}
 			}
-			private_clk_set_rate(sensor->mclk, 27000000);
-			private_clk_prepare_enable(sensor->mclk);
-			break;
+		}
 	}
+
+	private_clk_set_rate(sensor->mclk, MCLK);
+	private_clk_prepare_enable(sensor->mclk);
 
 	ISP_WARNING("\n====>[default_boot=%d] [resolution=%dx%d] [video_interface=%d] [MCLK=%d] \n", info->default_boot,
 		    wsize->width, wsize->height, info->video_interface, info->mclk);
@@ -844,8 +861,6 @@ static int sensor_attr_check(struct tx_isp_subdev *sd) {
 
 	sensor_set_attr(sd, wsize);
 	sensor->priv = wsize;
-	sensor->video.max_fps = wsize->fps;
-	sensor->video.min_fps = SENSOR_OUTPUT_MIN_FPS << 16 | 1;
 	return 0;
 
 }
