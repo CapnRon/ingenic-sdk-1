@@ -34,7 +34,7 @@
 // ============================================================================
 // SENSOR CAPABILITIES
 // ============================================================================
-#define SENSOR_MAX_WIDTH 2048 //2304
+#define SENSOR_MAX_WIDTH 2304
 #define SENSOR_MAX_HEIGHT 1536
 
 // ============================================================================
@@ -46,11 +46,17 @@
 // ============================================================================
 // TIMING AND PERFORMANCE
 // ============================================================================
-#define SENSOR_SUPPORT_PCLK_FPS_30 (120000*1000)
-#define SENSOR_SUPPORT_PCLK_FPS_15 (45000*1000)
+#define SENSOR_SUPPORT_SCLK_4M (120000000)
+#define SENSOR_SUPPORT_SCLK_3M (78000000)
 #define SENSOR_OUTPUT_MAX_FPS 25
 #define SENSOR_OUTPUT_MIN_FPS 5
 #define DRIVE_CAPABILITY_1
+
+typedef enum {
+	SENSOR_RES_400 = 400,	/* 2304*1536 @25fps */
+	SENSOR_RES_330 = 330,	/* 2304*1440 @15fps */
+	SENSOR_RES_300 = 300,	/* 2048*1536 @25fps */
+} sensor_res_mode;
 
 static int reset_gpio = GPIO_PA(18);
 module_param(reset_gpio, int, S_IRUGO);
@@ -60,9 +66,9 @@ static int pwdn_gpio = -1;
 module_param(pwdn_gpio, int, S_IRUGO);
 MODULE_PARM_DESC(pwdn_gpio, "Power down GPIO NUM");
 
-static int sensor_max_fps = TX_SENSOR_MAX_FPS_25;
-module_param(sensor_max_fps, int, S_IRUGO);
-MODULE_PARM_DESC(sensor_max_fps, "Sensor Max Fps set interface");
+static int sensor_resolution = SENSOR_RES_300;
+module_param(sensor_resolution, int, S_IRUGO);
+MODULE_PARM_DESC(sensor_resolution, "Sensor Resolution set interface");
 
 struct regval_list {
 	uint16_t reg_num;
@@ -173,6 +179,115 @@ unsigned int sensor_alloc_dgain(unsigned int isp_gain, unsigned char shift, unsi
 	return 0;
 }
 
+/*
+ * The MIPI link rate is fixed by the sensor PLL block (0x36e9-0x36fa) and is
+ * reported back by 0x4837, which holds the bit period in units of 0.05ns:
+ * 0x4837 = 0x20 -> 20000/32 = 625Mbps/lane. Every mode below drives that same
+ * PLL, so .clk must describe ~600Mbps/lane, not the 400 the 3M-only vendor
+ * driver left behind, and the T30 1.0.5 driver (the only vendor drop with a
+ * 2304 mode) says 600 for exactly these register tables.
+ *
+ * This is not the fix for the black band at column 2140 of the 2304 wide
+ * frame. That one lives in the ISP: the lens shading mesh in sensor-iq is
+ * calibrated 2048 wide, so past column 2048 the ISP indexes off the end of
+ * the calibrated node columns. Measured on a Wyze VDB1 (T31X): the notch
+ * stays at column 2140 across 2304x1536 and 2304x1440, which run different
+ * PLLs, HTS and lane rates -- so it cannot be D-PHY timing.
+ */
+/* 2304*1536 @25fps, HTS 2500, VTS 1920 */
+static struct tx_isp_mipi_bus sensor_mipi_2304_1536 = {
+	.mode = SENSOR_MIPI_OTHER_MODE,
+	.clk = 600,
+	.lans = 2,
+	.settle_time_apative_en = 1,
+	.mipi_sc.sensor_csi_fmt = TX_SENSOR_RAW10,
+	.mipi_sc.hcrop_diff_en = 0,
+	.mipi_sc.mipi_vcomp_en = 0,
+	.mipi_sc.mipi_hcomp_en = 0,
+	.mipi_sc.line_sync_mode = 0,
+	.mipi_sc.work_start_flag = 0,
+	.image_twidth = 2304,
+	.image_theight = 1536,
+	.mipi_sc.mipi_crop_start0x = 0,
+	.mipi_sc.mipi_crop_start0y = 0,
+	.mipi_sc.mipi_crop_start1x = 0,
+	.mipi_sc.mipi_crop_start1y = 0,
+	.mipi_sc.mipi_crop_start2x = 0,
+	.mipi_sc.mipi_crop_start2y = 0,
+	.mipi_sc.mipi_crop_start3x = 0,
+	.mipi_sc.mipi_crop_start3y = 0,
+	.mipi_sc.data_type_en = 0,
+	.mipi_sc.data_type_value = RAW10,
+	.mipi_sc.del_start = 0,
+	.mipi_sc.sensor_frame_mode = TX_SENSOR_DEFAULT_FRAME_MODE,
+	.mipi_sc.sensor_fid_mode = 0,
+	.mipi_sc.sensor_mode = TX_SENSOR_DEFAULT_MODE,
+};
+
+/* 2304*1440 @15fps, HTS 2600, VTS 2000 */
+static struct tx_isp_mipi_bus sensor_mipi_2304_1440 = {
+	.mode = SENSOR_MIPI_OTHER_MODE,
+	.clk = 600,
+	.lans = 2,
+	.settle_time_apative_en = 1,
+	.mipi_sc.sensor_csi_fmt = TX_SENSOR_RAW10,
+	.mipi_sc.hcrop_diff_en = 0,
+	.mipi_sc.mipi_vcomp_en = 0,
+	.mipi_sc.mipi_hcomp_en = 0,
+	.mipi_sc.line_sync_mode = 0,
+	.mipi_sc.work_start_flag = 0,
+	.image_twidth = 2304,
+	.image_theight = 1440,
+	.mipi_sc.mipi_crop_start0x = 0,
+	.mipi_sc.mipi_crop_start0y = 0,
+	.mipi_sc.mipi_crop_start1x = 0,
+	.mipi_sc.mipi_crop_start1y = 0,
+	.mipi_sc.mipi_crop_start2x = 0,
+	.mipi_sc.mipi_crop_start2y = 0,
+	.mipi_sc.mipi_crop_start3x = 0,
+	.mipi_sc.mipi_crop_start3y = 0,
+	.mipi_sc.data_type_en = 0,
+	.mipi_sc.data_type_value = RAW10,
+	.mipi_sc.del_start = 0,
+	.mipi_sc.sensor_frame_mode = TX_SENSOR_DEFAULT_FRAME_MODE,
+	.mipi_sc.sensor_fid_mode = 0,
+	.mipi_sc.sensor_mode = TX_SENSOR_DEFAULT_MODE,
+};
+
+/* 2048*1536 @25fps, HTS 2500, VTS 1920 (stock vendor values) */
+static struct tx_isp_mipi_bus sensor_mipi_2048_1536 = {
+	.mode = SENSOR_MIPI_OTHER_MODE,
+	.clk = 400,
+	.lans = 2,
+	.settle_time_apative_en = 1,
+	.mipi_sc.sensor_csi_fmt = TX_SENSOR_RAW10,
+	.mipi_sc.hcrop_diff_en = 0,
+	.mipi_sc.mipi_vcomp_en = 0,
+	.mipi_sc.mipi_hcomp_en = 0,
+	.mipi_sc.line_sync_mode = 0,
+	.mipi_sc.work_start_flag = 0,
+	.image_twidth = 2048,
+	.image_theight = 1536,
+	.mipi_sc.mipi_crop_start0x = 0,
+	.mipi_sc.mipi_crop_start0y = 0,
+	.mipi_sc.mipi_crop_start1x = 0,
+	.mipi_sc.mipi_crop_start1y = 0,
+	.mipi_sc.mipi_crop_start2x = 0,
+	.mipi_sc.mipi_crop_start2y = 0,
+	.mipi_sc.mipi_crop_start3x = 0,
+	.mipi_sc.mipi_crop_start3y = 0,
+	.mipi_sc.data_type_en = 0,
+	.mipi_sc.data_type_value = RAW10,
+	.mipi_sc.del_start = 0,
+	.mipi_sc.sensor_frame_mode = TX_SENSOR_DEFAULT_FRAME_MODE,
+	.mipi_sc.sensor_fid_mode = 0,
+	.mipi_sc.sensor_mode = TX_SENSOR_DEFAULT_MODE,
+};
+
+/*
+ * Defaults describe the 3M mode; sensor_probe() overwrites .mipi and the
+ * timing limits to match sensor_resolution.
+ */
 struct tx_isp_sensor_attribute sensor_attr={
 	.name = SENSOR_NAME,
 	.chip_id = SENSOR_CHIP_ID,
@@ -180,34 +295,6 @@ struct tx_isp_sensor_attribute sensor_attr={
 	.cbus_mask = V4L2_SBUS_MASK_SAMPLE_8BITS | V4L2_SBUS_MASK_ADDR_16BITS,
 	.cbus_device = SENSOR_I2C_ADDRESS,
 	.dbus_type = TX_SENSOR_DATA_INTERFACE_MIPI,
-	.mipi = {
-		.mode = SENSOR_MIPI_OTHER_MODE,
-		.clk = 400,
-		.lans = 2,
-		.settle_time_apative_en = 1,
-		.mipi_sc.sensor_csi_fmt = TX_SENSOR_RAW10,
-		.mipi_sc.hcrop_diff_en = 0,
-		.mipi_sc.mipi_vcomp_en = 0,
-		.mipi_sc.mipi_hcomp_en = 0,
-		.mipi_sc.line_sync_mode = 0,
-		.mipi_sc.work_start_flag = 0,
-		.image_twidth = 2048,
-		.image_theight = 1536,
-		.mipi_sc.mipi_crop_start0x = 0,
-		.mipi_sc.mipi_crop_start0y = 0,
-		.mipi_sc.mipi_crop_start1x = 0,
-		.mipi_sc.mipi_crop_start1y = 0,
-		.mipi_sc.mipi_crop_start2x = 0,
-		.mipi_sc.mipi_crop_start2y = 0,
-		.mipi_sc.mipi_crop_start3x = 0,
-		.mipi_sc.mipi_crop_start3y = 0,
-		.mipi_sc.data_type_en = 0,
-		.mipi_sc.data_type_value = RAW10,
-		.mipi_sc.del_start = 0,
-		.mipi_sc.sensor_frame_mode = TX_SENSOR_DEFAULT_FRAME_MODE,
-		.mipi_sc.sensor_fid_mode = 0,
-		.mipi_sc.sensor_mode = TX_SENSOR_DEFAULT_MODE,
-	},
 	.max_again = 256041,
 	.max_dgain = 0,
 	.min_integration_time = 3,
@@ -222,11 +309,6 @@ struct tx_isp_sensor_attribute sensor_attr={
 	.dgain_apply_delay = 0,
 	.sensor_ctrl.alloc_again = sensor_alloc_again,
 	.sensor_ctrl.alloc_dgain = sensor_alloc_dgain,
-
-	// to avoid black line:
-	// sensor_attr.mipi.clk = 500,
-	// sensor_attr.mipi.settle_time_apative_en = 0,
-	// sensor_attr.mipi.image_twidth = 2304,
 };
 
 static struct regval_list sensor_init_regs_2048_1536_30fps_mipi_3m[] = {
@@ -416,7 +498,7 @@ static struct regval_list sensor_init_regs_2304_1536_25fps_mipi[] = {
 	{0x3636, 0x24},
 	{0x3638, 0x18},
 	{0x3625, 0x03},
-	{0x4837, 0x35},
+	{0x4837, 0x20},
 	{0x3333, 0x20},
 	{0x330a, 0x01},
 	{0x366e, 0x08},
@@ -451,19 +533,19 @@ static struct regval_list sensor_init_regs_2304_1536_25fps_mipi[] = {
 	{0x3637, 0x63},
 	{0x3366, 0x78},
 	{0x33aa, 0x00},
-	{0x320c, 0x0a},
-	{0x320d, 0x28},
-	{0x3f04, 0x05},
-	{0x3f05, 0x00},
-	{0x3235, 0x0b},
-	{0x3236, 0xb0},
-	{0x36e9, 0x44},
-	{0x36ea, 0x33},
-	{0x36eb, 0x0e},
-	{0x36ec, 0x1e},
-	{0x36ed, 0x23},
-	{0x36f9, 0x06},
-	{0x36fa, 0xca},
+	{0x320c, 0x09},
+	{0x320d, 0xc4},
+	{0x3f04, 0x04},
+	{0x3f05, 0xbe},
+	{0x3235, 0x0c},
+	{0x3236, 0x7e},
+	{0x36e9, 0x02},
+	{0x36ea, 0x36},
+	{0x36eb, 0x06},
+	{0x36ec, 0x0e},
+	{0x36ed, 0x03},
+	{0x36f9, 0x01},
+	{0x36fa, 0x8a},
 	{0x36fb, 0x00},
 	{0x3222, 0x29},
 	{0x3901, 0x02},
@@ -522,9 +604,9 @@ static struct regval_list sensor_init_regs_2304_1536_25fps_mipi[] = {
 	{0x394f, 0x40},
 	{0x320e, 0x07},
 	{0x320f, 0x80},
-	{0x3802, 0x01},
+	{0x3802, 0x00},
 	{0x3e00, 0x00},
-	{0x3e01, 0xc7},
+	{0x3e01, 0xef},
 	{0x3e02, 0xc0},
 	{0x3e03, 0x0b},
 	{0x3e06, 0x00},
@@ -698,7 +780,16 @@ static struct regval_list sensor_init_regs_2304_1440_15fps_mipi[] = {
  * the order of the sensor_win_sizes is [full_resolution, preview_resolution].
  */
 static struct tx_isp_sensor_win_setting sensor_win_sizes[] = {
-	/* 2048*1536 @25fps */
+	/* [0] 2304*1536 @25fps -- sensor_resolution=400 */
+	{
+		.width = 2304,
+		.height = 1536,
+		.fps = 25 << 16 | 1,
+		.mbus_code = V4L2_MBUS_FMT_SBGGR10_1X10,
+		.colorspace = V4L2_COLORSPACE_SRGB,
+		.regs = sensor_init_regs_2304_1536_25fps_mipi,
+	},
+	/* [1] 2048*1536 @25fps -- sensor_resolution=300 */
 	{
 		.width = 2048,
 		.height = 1536,
@@ -707,7 +798,7 @@ static struct tx_isp_sensor_win_setting sensor_win_sizes[] = {
 		.colorspace = V4L2_COLORSPACE_SRGB,
 		.regs = sensor_init_regs_2048_1536_30fps_mipi_3m,
 	},
-	/* 2304*1440 @15fps */
+	/* [2] 2304*1440 @15fps -- sensor_resolution=330 */
 	{
 		.width = 2304,
 		.height = 1440,
@@ -715,17 +806,25 @@ static struct tx_isp_sensor_win_setting sensor_win_sizes[] = {
 		.mbus_code = V4L2_MBUS_FMT_SBGGR10_1X10,
 		.colorspace = V4L2_COLORSPACE_SRGB,
 		.regs = sensor_init_regs_2304_1440_15fps_mipi,
-	},
-	/* 2304*1536 @25fps */
-	{
-		.width = 2304,
-		.height = 1536,
-		.fps = 25 << 16 | 1,
-		.mbus_code = V4L2_MBUS_FMT_SBGGR10_1X10,
-		.colorspace = V4L2_COLORSPACE_SRGB,
-		.regs = sensor_init_regs_2304_1536_25fps_mipi,
 	}
 };
+
+static struct tx_isp_sensor_win_setting *sensor_select_wsize(void)
+{
+	switch (sensor_resolution) {
+	case SENSOR_RES_400:
+		return &sensor_win_sizes[0];
+	case SENSOR_RES_300:
+		return &sensor_win_sizes[1];
+	case SENSOR_RES_330:
+		return &sensor_win_sizes[2];
+	default:
+		ISP_ERROR("%s does not support resolution %d, using 2048*1536\n",
+			  SENSOR_NAME, sensor_resolution);
+		sensor_resolution = SENSOR_RES_300;
+		return &sensor_win_sizes[1];
+	}
+}
 
 static enum v4l2_mbus_pixelcode sensor_mbus_code[] = {
 	V4L2_MBUS_FMT_SBGGR10_1X10,
@@ -936,7 +1035,7 @@ static int sensor_get_black_pedestal(struct tx_isp_subdev *sd, int value)
 static int sensor_init(struct tx_isp_subdev *sd, int enable)
 {
 	struct tx_isp_sensor *sensor = sd_to_sensor_device(sd);
-	struct tx_isp_sensor_win_setting *wsize = &sensor_win_sizes[0];
+	struct tx_isp_sensor_win_setting *wsize = sensor_select_wsize();
 	int ret = 0;
 
 	if (!enable)
@@ -985,17 +1084,19 @@ static int sensor_set_fps(struct tx_isp_subdev *sd, int fps)
 	int ret = 0;
 	unsigned char val = 0;
 
-	switch (sensor_max_fps) {
-	case TX_SENSOR_MAX_FPS_25:
-		pclk = SENSOR_SUPPORT_PCLK_FPS_30;
+	switch (sensor_resolution) {
+	case SENSOR_RES_400:
+	case SENSOR_RES_300:
+		pclk = SENSOR_SUPPORT_SCLK_4M;
 		max_fps = SENSOR_OUTPUT_MAX_FPS;
 		break;
-	case TX_SENSOR_MAX_FPS_15:
-		pclk = SENSOR_SUPPORT_PCLK_FPS_15;
+	case SENSOR_RES_330:
+		pclk = SENSOR_SUPPORT_SCLK_3M;
 		max_fps = TX_SENSOR_MAX_FPS_15;
 		break;
 	default:
 		ISP_ERROR("Now we do not support this framerate!!!\n");
+		return -1;
 	}
 
 	/* the format of fps is 16/16. for example 25 << 16 | 2, the value is 25/2 fps. */
@@ -1039,10 +1140,9 @@ static int sensor_set_mode(struct tx_isp_subdev *sd, int value)
 	struct tx_isp_sensor_win_setting *wsize = NULL;
 	int ret = ISP_SUCCESS;
 
-	if (value == TX_ISP_SENSOR_FULL_RES_MAX_FPS) {
-		wsize = &sensor_win_sizes[0];
-	} else if (value == TX_ISP_SENSOR_PREVIEW_RES_MAX_FPS) {
-		wsize = &sensor_win_sizes[1];
+	if (value == TX_ISP_SENSOR_FULL_RES_MAX_FPS ||
+	    value == TX_ISP_SENSOR_PREVIEW_RES_MAX_FPS) {
+		wsize = sensor_select_wsize();
 	}
 
 	if (wsize) {
@@ -1225,7 +1325,7 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	struct tx_isp_subdev *sd;
 	struct tx_isp_video_in *video;
 	struct tx_isp_sensor *sensor;
-	struct tx_isp_sensor_win_setting *wsize = &sensor_win_sizes[0];
+	struct tx_isp_sensor_win_setting *wsize = sensor_select_wsize();
 
 	sensor = (struct tx_isp_sensor *)kzalloc(sizeof(*sensor), GFP_KERNEL);
 	if (!sensor) {
@@ -1242,6 +1342,43 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	}
 	private_clk_set_rate(sensor->mclk, 24000000);
 	private_clk_enable(sensor->mclk);
+
+	/*
+	 * Every mode shares one register bank, so the attribute has to be
+	 * retargeted at the mode we are actually going to program. The vendor
+	 * T30 1.0.5 driver carries one attribute per resolution; this is the
+	 * same data expressed against the T31 mipi bus layout.
+	 */
+	switch (sensor_resolution) {
+	case SENSOR_RES_400:
+		/* 2304*1536: HTS 2500, VTS 1920 */
+		memcpy(&sensor_attr.mipi, &sensor_mipi_2304_1536, sizeof(sensor_mipi_2304_1536));
+		sensor_attr.total_width = 2500;
+		sensor_attr.total_height = 1920;
+		sensor_attr.max_integration_time_native = 1916;
+		sensor_attr.integration_time_limit = 1916;
+		sensor_attr.max_integration_time = 1916;
+		break;
+	case SENSOR_RES_330:
+		/* 2304*1440: HTS 2600, VTS 2000 */
+		memcpy(&sensor_attr.mipi, &sensor_mipi_2304_1440, sizeof(sensor_mipi_2304_1440));
+		sensor_attr.total_width = 2600;
+		sensor_attr.total_height = 2000;
+		sensor_attr.max_integration_time_native = 1996;
+		sensor_attr.integration_time_limit = 1996;
+		sensor_attr.max_integration_time = 1996;
+		break;
+	case SENSOR_RES_300:
+	default:
+		/* 2048*1536: stock vendor T31 attribute, left untouched */
+		memcpy(&sensor_attr.mipi, &sensor_mipi_2048_1536, sizeof(sensor_mipi_2048_1536));
+		sensor_attr.total_width = 2600;
+		sensor_attr.total_height = 2000;
+		sensor_attr.max_integration_time_native = 1996;
+		sensor_attr.integration_time_limit = 1996;
+		sensor_attr.max_integration_time = 1996;
+		break;
+	}
 
 	sd = &sensor->sd;
 	video = &sensor->video;
@@ -1260,7 +1397,8 @@ static int sensor_probe(struct i2c_client *client, const struct i2c_device_id *i
 	tx_isp_set_subdev_hostdata(sd, sensor);
 	private_i2c_set_clientdata(client, sd);
 
-	ISP_WARNING("probe ok ------->%s\n", SENSOR_NAME);
+	ISP_WARNING("probe ok ------->%s %dx%d\n", SENSOR_NAME,
+		    wsize->width, wsize->height);
 
 	return 0;
 err_get_mclk:
