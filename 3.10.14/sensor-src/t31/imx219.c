@@ -47,7 +47,6 @@
 #include <linux/proc_fs.h>
 #include <tx-isp-common.h>
 #include <sensor-common.h>
-#include <sensor-info.h>
 
 // ============================================================================
 // SENSOR IDENTIFICATION
@@ -114,18 +113,6 @@ enum {
 static int sensor_resolution = SENSOR_RES_1080;
 module_param(sensor_resolution, int, S_IRUGO);
 MODULE_PARM_DESC(sensor_resolution, "Sensor Resolution setting interface: 1080=1920x1080@30fps (default, cropped), 1232=1632x1232@30fps (2x2 binned, full FOV), 2464=3280x2464@15fps (full sensor), 480=640x480@30fps");
-
-static struct sensor_info sensor_info = {
-    .name = SENSOR_NAME,
-    .chip_id = SENSOR_CHIP_ID,
-    .version = SENSOR_VERSION,
-    .min_fps = SENSOR_OUTPUT_MIN_FPS,
-    .max_fps = SENSOR_OUTPUT_MAX_FPS,
-    .actual_fps = 0,
-    .chip_i2c_addr = SENSOR_I2C_ADDRESS,
-    .width = SENSOR_MAX_WIDTH,
-    .height = SENSOR_MAX_HEIGHT,
-};
 
 struct regval_list {
     uint16_t reg_num;
@@ -1415,34 +1402,6 @@ static __init int init_sensor(void)
 {
     int ret = 0;
 
-    /* sensor_info.width/height (registered here, at module_init, before
-     * sensor_probe() runs) is what "auto" (0x0) stream resolution
-     * requests resolve against -- it must match whichever mode
-     * sensor_resolution actually selects, not the sensor's absolute
-     * max capability, or downstream would request a size the hardware
-     * isn't actually programmed to output. */
-    switch (sensor_resolution) {
-        case SENSOR_RES_1232:
-            sensor_info.width = 1632;
-            sensor_info.height = 1232;
-            break;
-        case SENSOR_RES_2464:
-            sensor_info.width = 3280;
-            sensor_info.height = 2464;
-            break;
-        case SENSOR_RES_480:
-            sensor_info.width = 640;
-            sensor_info.height = 480;
-            break;
-        case SENSOR_RES_1080:
-        default:
-            sensor_info.width = 1920;
-            sensor_info.height = 1080;
-            break;
-    }
-
-    sensor_common_init(&sensor_info);
-
     ret = private_driver_get_interface();
     if (ret) {
         ISP_ERROR("Failed to init %s driver.\n", SENSOR_NAME);
@@ -1455,7 +1414,6 @@ static __init int init_sensor(void)
 static __exit void exit_sensor(void)
 {
     private_i2c_del_driver(&sensor_driver);
-    sensor_common_exit();
 }
 
 module_init(init_sensor);
